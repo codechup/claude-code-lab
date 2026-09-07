@@ -2,7 +2,7 @@
 name: commit-msg
 description: Draft a conventional commit message for the currently staged diff. Prompt-only — reads the diff and $ARGUMENTS (an optional scope hint), writes nothing.
 when_to_use: Staged changes exist and you want a conventional-commit message drafted from them instead of writing one by hand.
-argument-hint: '[optional scope, e.g. cli or api]'
+argument-hint: "[optional scope, e.g. cli or api]"
 allowed-tools: Bash(git diff:*), Bash(git status:*)
 disable-model-invocation: true
 model: haiku

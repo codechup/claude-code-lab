@@ -2,7 +2,7 @@
 name: review-security
 description: Prompt-only checklist for reviewing this repo's src/ for the common mistakes it is seeded with — unvalidated input, unhandled promise rejections, secrets in logs, unsanitised string interpolation.
 when_to_use: Before merging a change to src/, or when asked to "review this for security issues."
-argument-hint: '[optional path to focus on, e.g. src/api/server.ts]'
+argument-hint: "[optional path to focus on, e.g. src/api/server.ts]"
 allowed-tools: Read, Grep, Glob
 disable-model-invocation: true
 model: sonnet

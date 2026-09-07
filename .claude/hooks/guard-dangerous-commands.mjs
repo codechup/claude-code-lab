@@ -4,19 +4,19 @@
 //
 // Contract: exit 2 (or a JSON hookSpecificOutput.permissionDecision) on stdin/stdout blocks the
 // tool call; this hook is deliberately narrow — it is teaching material, not a full sandbox.
-import { readFileSync } from 'node:fs';
+import { readFileSync } from "node:fs";
 
 let input = {};
 try {
-  input = JSON.parse(readFileSync(0, 'utf8') || '{}');
+  input = JSON.parse(readFileSync(0, "utf8") || "{}");
 } catch {
   process.exit(0);
 }
 
-const tool = input.tool_name ?? '';
-if (tool !== 'Bash' && tool !== 'PowerShell') process.exit(0);
+const tool = input.tool_name ?? "";
+if (tool !== "Bash" && tool !== "PowerShell") process.exit(0);
 
-const command = String(input.tool_input?.command ?? '');
+const command = String(input.tool_input?.command ?? "");
 
 const DANGEROUS = [
   /\brm\s+(-\w*r\w*f\w*|-\w*f\w*r\w*)\s+(\/|~|\.\.|\*)/i, // rm -rf /, rm -rf ~, rm -rf .., rm -rf *
@@ -30,8 +30,8 @@ if (!hit) process.exit(0);
 console.log(
   JSON.stringify({
     hookSpecificOutput: {
-      hookEventName: 'PreToolUse',
-      permissionDecision: 'deny',
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
       permissionDecisionReason:
         `Blocked by guard-dangerous-commands: "${command}" looks destructive ` +
         `(broad rm -rf or a plain force-push). Use --force-with-lease, or narrow the path, ` +

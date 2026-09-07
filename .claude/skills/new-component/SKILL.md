@@ -2,7 +2,7 @@
 name: new-component
 description: Scaffold a new store.ts operation (function stub + test stub) from a name, then implement it. Tool-running — runs a script, then writes real code in a forked context.
 when_to_use: Adding a brand-new operation to src/store.ts (not fixing an existing bug).
-argument-hint: '<functionName>'
+argument-hint: "<functionName>"
 allowed-tools: Bash(node .claude/skills/new-component/scaffold.mjs:*), Read, Edit, Write, Bash(npm test)
 context: fork
 model: sonnet

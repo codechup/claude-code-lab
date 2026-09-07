@@ -1,6 +1,6 @@
 ---
 paths:
-  - 'src/**'
+  - "src/**"
 ---
 
 # Style rules for src/
