@@ -21,14 +21,8 @@ export interface AddTaskInput {
 }
 
 export function addTask(input: AddTaskInput): Task {
-  const title = input.title?.trim();
-  if (!title) {
-    throw new InvalidTaskError("title must not be empty");
-  }
+  const title = input.title;
   const priority = input.priority ?? 0;
-  if (priority < 0) {
-    throw new InvalidTaskError("priority must not be negative");
-  }
   const task: Task = {
     id: randomUUID(),
     title,
