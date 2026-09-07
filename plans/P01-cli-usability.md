@@ -2,8 +2,8 @@
 id: P01
 title: CLI usability - help text and --version
 milestone: M1
-status: todo
-owner: null
+status: in_progress
+owner: sonnet-p01-2026-09-07
 branch: plan/01-cli-usability
 model_hint: sonnet
 effort_hint: low
@@ -13,7 +13,7 @@ owned_paths:
   - test/cli-usability.test.ts
 shared_paths: []
 estimate: S
-updated_at: 2026-09-07T09:00:00Z
+updated_at: 2026-09-07T10:15:00Z
 ---
 
 ## Goal

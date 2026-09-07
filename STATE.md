@@ -12,8 +12,10 @@
   Cross-check plans/*.md's frontmatter if in doubt.
 -->
 
-> **TL;DR:** **M1** 0/2 done · 0 in progress · 0 in review · 0 blocked · 2 todo. Current
-> wave (2 claimable): `P01`, `P02`. Claim with `node scripts/plan.mjs claim P01 --owner <name>`.
+> **TL;DR:** **M1** 0/2 done · 2 in progress · 0 in review · 0 blocked · 0 todo. Current
+> wave (0 claimable). List claimable plans with `node scripts/plan.mjs`; this repo's script
+> only lists — claiming means hand-editing a plan's `status`/`owner`/`branch`/`updated_at`
+> frontmatter yourself (see m18-05-handoff-notes for why a bigger repo automates this).
 
 ---
 
@@ -21,21 +23,23 @@
 
 | Milestone | done | review | in_progress | blocked | todo | total |
 | --------- | ---: | -----: | ----------: | ------: | ---: | ----: |
-| M1        |    0 |      0 |           0 |       0 |    2 |     2 |
+| M1        |    0 |      0 |           2 |       0 |    0 |     2 |
 
 ## Claimable now
 
-| Plan  | Title                                     | Owned paths                                |
-| ----- | ----------------------------------------- | ------------------------------------------ |
-| `P01` | CLI usability - help text and --version   | `src/cli.ts`, `test/cli-usability.test.ts` |
-| `P02` | API docs - pagination and error responses | `docs/API.md`                              |
-
-`P01` and `P02` have disjoint `owned_paths` — both are safe to claim and work in parallel
-worktrees at once (see m18-03-owned-paths-worktrees).
+_None — both plans are claimed and in progress (see below)._
 
 ## In progress
 
-_None._
+| Plan  | Title                                     | Owner                 | Branch                   | Since                | Stale |
+| ----- | ----------------------------------------- | --------------------- | ------------------------ | -------------------- | ----- |
+| `P01` | CLI usability - help text and --version   | sonnet-p01-2026-09-07 | `plan/01-cli-usability`  | 2026-09-07T10:15:00Z | —     |
+| `P02` | API docs - pagination and error responses | opus-p02-2026-09-07   | `plan/02-api-error-docs` | 2026-09-07T10:20:00Z | —     |
+
+`P01` and `P02` have disjoint `owned_paths` — that's what makes it safe to work both at once,
+each in its own worktree (see m18-03-owned-paths-worktrees):
+`git worktree add ../claude-code-lab-p01 plan/01-cli-usability` and
+`git worktree add ../claude-code-lab-p02 plan/02-api-error-docs`.
 
 ## Blocked
 
@@ -51,7 +55,7 @@ _None._
 
 ## Recent changes
 
-| Plan  | Status | Updated              | Owner |
-| ----- | ------ | -------------------- | ----- |
-| `P02` | todo   | 2026-09-07T09:00:00Z | —     |
-| `P01` | todo   | 2026-09-07T09:00:00Z | —     |
+| Plan  | Status      | Updated              | Owner                 |
+| ----- | ----------- | -------------------- | --------------------- |
+| `P02` | in_progress | 2026-09-07T10:20:00Z | opus-p02-2026-09-07   |
+| `P01` | in_progress | 2026-09-07T10:15:00Z | sonnet-p01-2026-09-07 |

@@ -2,8 +2,8 @@
 id: P02
 title: API docs - pagination and error responses
 milestone: M1
-status: todo
-owner: null
+status: in_progress
+owner: opus-p02-2026-09-07
 branch: plan/02-api-error-docs
 model_hint: sonnet
 effort_hint: low
@@ -12,7 +12,7 @@ owned_paths:
   - docs/API.md
 shared_paths: []
 estimate: S
-updated_at: 2026-09-07T09:00:00Z
+updated_at: 2026-09-07T10:20:00Z
 ---
 
 ## Goal
