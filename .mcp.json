@@ -10,6 +10,13 @@
     "playwright": {
       "command": "npx",
       "args": ["-y", "@playwright/mcp@latest"]
+    },
+    "labtrack": {
+      "command": "node",
+      "args": ["mcp/src/index.ts"],
+      "env": {
+        "LABTRACK_DATA_FILE": "${LABTRACK_DATA_FILE:-.labtrack-data.json}"
+      }
     }
   }
 }

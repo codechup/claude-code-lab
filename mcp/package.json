@@ -1,0 +1,21 @@
+{
+  "name": "labtrack-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A minimal stdio MCP server exposing one tool (labtrack_status) over the labtrack task file.",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "node src/index.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.7.2"
+  }
+}
