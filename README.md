@@ -51,10 +51,13 @@ git checkout lesson/<module>-<NN>-solution   # the expected state after
 Each checkout is a normal, self-contained state of this repo — always run `npm ci` again
 after switching tags, since `package-lock.json` can differ between them.
 
-A lesson's frontmatter (`docs/CURRICULUM.md` in `claude-code-training`) carries
-`lab.repo_tag: lesson/<module>-<NN>` (the plan's `Lab` component derives both `-start` and
-`-solution` from that one value; a lesson with no hands-on lab, or one not yet tagged, uses
-`repoTag: none` — see the M0 sample lesson, `m01-start/01`).
+A lesson's frontmatter (`content/<lang>/<level>/<module>/NN-*.mdx` in `claude-code-training`,
+schema in `src/content/schema.ts`) carries `lab.repo_tag`, the exact `-start` tag to check
+out - e.g. `repo_tag: 'lesson/m02-02-start'` - which the `<Lab>` component renders as
+`git checkout {repoTag}` (`src/components/mdx/Lab.astro`, `src/components/mdx/lab.ts`). The
+matching `-solution` tag is the same stem with `-solution` in place of `-start`; a lesson
+with no hands-on lab, or one not yet tagged, uses `repo_tag: 'none'` (see the M0 sample
+lesson, `m01-start/01-what-claude-code-is`).
 
 ## Lesson tag map (M1: L1 beginner + L2 intermediate)
 

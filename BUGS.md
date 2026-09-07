@@ -46,14 +46,18 @@ no error is thrown.
 **Fix:** trim and check the title, check `priority >= 0`, throw `InvalidTaskError` otherwise.
 **Used by:** `lesson/m01-04-start`/`-solution` (the first hands-on "ask, read, edit, run tests" lesson).
 
-## B5 — A flaky test (real-timer-dependent)
+## B5 — A timing-dependent test (the "flaky test" lesson)
 
 **Where:** the "becomes overdue" test in `test/overdue.test.ts`.
 **Bug:** the test asserts on `isOverdue()` around real `setTimeout` sleeps instead of
-controlling time — it is timing-dependent and can pass or fail depending on machine speed
-and scheduler load, independent of whether the code under test is correct.
-**Reproduce:** at the `-start` tag the test uses real sleeps; run it repeatedly (or under
-load) to see it flake.
+controlling the clock. As written it fails deterministically (a task due in 200ms is
+correctly _not yet_ overdue after only ~40ms of real sleeping, but the test asserts it
+is) — real timer scheduling never gives a test the precision to assert against a fixed
+elapsed-time budget, so this class of test is inherently unreliable: tune the margins
+tighter and the same mistake becomes genuinely intermittent (flaky) instead of reliably
+wrong. Either way, a test must never depend on real time passing.
+**Reproduce:** at the `-start` tag, `npm test` fails this one assertion every run (verified
+3/3 runs while authoring this repo).
 **Fix:** give `isOverdue()` an injectable clock (`now: () => number = Date.now`), and drive
 the test with `vi.useFakeTimers()` / `vi.setSystemTime()` — no real time elapses, so the
 result is deterministic on every run.
