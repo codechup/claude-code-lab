@@ -92,5 +92,15 @@ find and remove.
 ## Non-bug lesson tags
 
 Not every hands-on lesson is about a code bug — several are about a repo state (a skill, a
-hook, a memory file) being added, or about Claude Code's own CLI/UI behaviour rather than
-this repo's code. Those are listed in `README.md`'s "Lesson tag map" table, not here.
+hook, a memory file, an agent, a plugin) being added, or about Claude Code's own CLI/UI
+behaviour rather than this repo's code. Those are listed in full in `README.md`'s "Lesson
+tag map" tables, not here.
+
+Several L3/L4 (`m10`–`m21`) lessons are specifically **process-only** — no lab makes sense
+against this repo's code, so `-start` and `-solution` point at the same commit: the two
+`m15-platforms` lessons this repo tags (`lesson/m15-01-vs-code`, about the VS Code
+extension, and `lesson/m15-06-chrome`, about Claude in Chrome) both use the repo as-is,
+same as `m11-03/04/05` (external MCP servers), `m12-02` (marketplaces), `m13-03/05/06`
+(issue-to-PR, the Agent SDK in TypeScript/Python), `m10-05` (fork/background agents,
+worktrees) and `m19-03` (Chrome automation). See `README.md`'s L3/L4 table for exactly
+which commit each of those pairs points at.

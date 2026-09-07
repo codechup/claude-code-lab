@@ -30,12 +30,35 @@ npm run api                                   # try the HTTP API on :3000
 src/
   types.ts        Task interface, InvalidTaskError
   store.ts        all business logic (CLI and API are thin wrappers around this)
-  cli.ts          labtrack CLI (commander): add, list, show, done, rm
-  api/server.ts   tiny HTTP API: GET/POST /tasks, GET /health, ...
-test/             vitest — one file per area (store, overdue, persist, api)
-.claude/          this repo's own minimal Claude Code setup (CLAUDE.md, one rule,
-                  4 hooks, 3 skills) — teaching material, not a full dogfooding setup
+  cli.ts          labtrack CLI (commander): add, list, show, done, rm, --version
+  api/server.ts   tiny HTTP API: GET/POST /tasks, GET /health, ... (docs: docs/API.md)
+test/             vitest — one file per area (store, overdue, persist, api, security,
+                  cli-usability)
+.claude/          this repo's own minimal Claude Code setup: CLAUDE.md, one rule, 4 hooks,
+                  3 skills, 4 agents (code-reviewer, test-writer, docs-writer, researcher),
+                  settings.json (a small team allowlist + deny list) — teaching material,
+                  not a full dogfooding setup
 BUGS.md           every seeded bug: what it is, how to reproduce it, its tag pair
+.mcp.json         example MCP server config: github, playwright, and this repo's own
+                  labtrack server (below)
+mcp/              a minimal stdio MCP server (@modelcontextprotocol/sdk), one tool
+                  (labtrack_status) — its own package.json, never touches root npm scripts
+plugins/          labtrack-tools: the commit-msg skill + format-on-save hook, packaged
+                  as an installable plugin
+scripts/          headless-example.sh (claude -p), loop-check.sh (a /loop target),
+                  plan.mjs (lists claimable plans/*.md)
+routines/         an example routine description (cron-triggered, repo-side brief)
+plans/, STATE.md  two example plans with the training repo's own frontmatter convention,
+                  and a generated-looking STATE.md
+WORKFLOW.md       a review → verify → fix pipeline brief (the Workflow tool)
+artifacts/        sample data (task-activity.csv) for the Artifacts/dataviz labs
+large/            30 generated placeholder modules for the large-codebase-navigation labs
+                  — outside tsconfig.json's/vitest.config.ts's include globs by design
+MARKETPLACE.md    what this repo has to share as a team plugin marketplace
+.gitleaks.toml    this repo's secret-scanning baseline
+.github/workflows/
+  ci.yml            typecheck + lint + test on every push/PR
+  claude-review.yml anthropics/claude-code-action@v1 PR review (no-op without the secret)
 ```
 
 ## How a lesson uses a tag
@@ -59,11 +82,16 @@ matching `-solution` tag is the same stem with `-solution` in place of `-start`;
 with no hands-on lab, or one not yet tagged, uses `repo_tag: 'none'` (see the M0 sample
 lesson, `m01-start/01-what-claude-code-is`).
 
-## Lesson tag map (M1: L1 beginner + L2 intermediate)
+## Lesson tag map
 
-Every `Lab`-tagged lesson in `docs/CURRICULUM.md` §2 for modules m01–m09. "Change" says what
-actually differs between the `-start` and `-solution` commit for that tag — a `BUGS.md`
-entry for the bug-fix ones, a short description for the rest.
+Two tables: M1 (L1 Beginner + L2 Intermediate, modules m01–m09, tagged first) below, then
+L3 Advanced + L4 Master (modules m10–m21) further down. Together they cover every
+`Lab`-tagged lesson in `docs/CURRICULUM.md` §2 through m21 — see "Modules with no tags"
+after the second table for the two modules (m20, m21) that have no `Lab`-tagged lesson at
+all. "Change" says what actually differs between the `-start` and `-solution` commit for
+that tag — a `BUGS.md` entry for the bug-fix ones, a short description for the rest.
+
+### M1 — L1 Beginner + L2 Intermediate (m01–m09)
 
 | Lesson                          | Tag prefix      | Change                                                                                     |
 | ------------------------------- | --------------- | ------------------------------------------------------------------------------------------ |
@@ -96,12 +124,56 @@ stable `main` tip once every structural addition above is in place): those lesso
 about Claude Code's own CLI/UI behaviour, not a code change in this repo, so there is
 nothing to diff.
 
-L3 (`m10`–`m15`) and L4 (`m16`–`m21`) hands-on lessons are **not yet tagged** — that is a
-deliberate, documented scope limit of this plan (P22 shipped only the M1 tag set), tracked
-as a follow-up in `claude-code-training`'s plan Handoff notes, not a gap in this file. Two
-structural surfaces for the future `m14-security` module already exist in `src/api/server.ts`
-(marked `TEACHING SURFACE` in comments) and are catalogued as B6/B7 in `BUGS.md`, reserved
-for whichever plan tags L3.
+### L3 Advanced + L4 Master (m10–m21)
+
+Every `Lab`-tagged lesson in `docs/CURRICULUM.md` §2 for modules m10–m21 — 26 lesson pairs,
+52 tags. Unlike the M1 table above, a "process-only" pair here points `-start`/`-solution`
+at whichever commit was the tip _at that lesson's position in the sequence_ (each module
+was tagged in curriculum order, building on the one before), not one single stable `main`
+tip — e.g. `lesson/m11-03-*` points at the commit right after `lesson/m11-02-solution`
+landed, not at the final tip of this whole table.
+
+| Lesson                          | Tag prefix      | Change                                                                                                                                                                                                                                                                                                                      |
+| ------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| m10-03-agent-lab                | `lesson/m10-03` | Adds `.claude/agents/` (code-reviewer, test-writer, docs-writer, researcher).                                                                                                                                                                                                                                               |
+| m10-05-fork-background-worktree | `lesson/m10-05` | Process-only — fork/background agents, worktrees; both tags point at the m10-03 solution tip.                                                                                                                                                                                                                               |
+| m11-02-add-list-remove-scopes   | `lesson/m11-02` | Adds an example `.mcp.json` (github, playwright servers).                                                                                                                                                                                                                                                                   |
+| m11-03-github-mcp               | `lesson/m11-03` | Process-only — GitHub MCP server usage; both tags point at the m11-02 solution tip.                                                                                                                                                                                                                                         |
+| m11-04-browser-mcp              | `lesson/m11-04` | Process-only — Playwright/Chrome MCP; both tags point at the m11-02 solution tip.                                                                                                                                                                                                                                           |
+| m11-05-database-mcp             | `lesson/m11-05` | Process-only — SQLite/Postgres MCP; both tags point at the m11-02 solution tip.                                                                                                                                                                                                                                             |
+| m11-06-write-your-own-server    | `lesson/m11-06` | Adds `mcp/`, a minimal TypeScript MCP server (one tool, `labtrack_status`); registers it in `.mcp.json`.                                                                                                                                                                                                                    |
+| m12-02-marketplaces             | `lesson/m12-02` | Process-only — discovering/installing plugins; both tags point at the m11-06 solution tip.                                                                                                                                                                                                                                  |
+| m12-03-build-a-plugin           | `lesson/m12-03` | Adds `plugins/labtrack-tools/` (the m06-03 skill + m07-03 hook, packaged). **Note:** `-start` was moved to the tip right before this commit, which by then already included m13-01/m13-02's files below (a sequencing fix made while authoring this table) — the diff to `-solution` is still exactly the plugin's 5 files. |
+| m13-01-claude-p                 | `lesson/m13-01` | Adds `scripts/headless-example.sh`.                                                                                                                                                                                                                                                                                         |
+| m13-02-github-actions-review    | `lesson/m13-02` | Adds `.github/workflows/claude-review.yml`.                                                                                                                                                                                                                                                                                 |
+| m13-03-issue-to-pr              | `lesson/m13-03` | Process-only — `@claude` on issues/PRs via the same workflow; both tags point at the m13-02 solution tip.                                                                                                                                                                                                                   |
+| m13-05-agent-sdk-typescript     | `lesson/m13-05` | Process-only — external `@anthropic-ai/claude-agent-sdk` usage; both tags point at the m13-02 solution tip.                                                                                                                                                                                                                 |
+| m13-06-agent-sdk-python         | `lesson/m13-06` | Process-only — same, Python SDK; both tags point at the m13-02 solution tip.                                                                                                                                                                                                                                                |
+| m14-02-prompt-injection         | `lesson/m14-02` | **BUGS.md B6** — unsanitised `renderNote()`.                                                                                                                                                                                                                                                                                |
+| m14-03-secrets                  | `lesson/m14-03` | **BUGS.md B7** — API token logged on startup; also adds `.gitleaks.toml`.                                                                                                                                                                                                                                                   |
+| m15-01-vs-code                  | `lesson/m15-01` | Process-only — VS Code extension; both tags point at the m14-03 solution tip.                                                                                                                                                                                                                                               |
+| m15-06-chrome                   | `lesson/m15-06` | Process-only — Claude in Chrome; both tags point at the m14-03 solution tip.                                                                                                                                                                                                                                                |
+| m16-04-pipeline-lab             | `lesson/m16-04` | Adds `WORKFLOW.md` (a review → verify → fix pipeline brief).                                                                                                                                                                                                                                                                |
+| m17-01-loop                     | `lesson/m17-01` | Adds `scripts/loop-check.sh`.                                                                                                                                                                                                                                                                                               |
+| m17-02-routines                 | `lesson/m17-02` | Adds `routines/nightly-regression-check.md`.                                                                                                                                                                                                                                                                                |
+| m18-02-state-md-and-claims      | `lesson/m18-02` | Adds `plans/` (`P01-cli-usability.md`, `P02-api-error-docs.md`, both `todo`) and `STATE.md`.                                                                                                                                                                                                                                |
+| m18-03-owned-paths-worktrees    | `lesson/m18-03` | Claims both plans (`todo` → `in_progress`, disjoint `owned_paths`, separate worktrees/branches).                                                                                                                                                                                                                            |
+| m18-05-handoff-notes            | `lesson/m18-05` | Implements both plans for real (CLI help text/`--version`, `docs/API.md`), fills their Handoff notes, moves them to `review`; adds `scripts/plan.mjs`.                                                                                                                                                                      |
+| m19-01-artifacts                | `lesson/m19-01` | Adds `artifacts/task-activity.csv` (+ README) — sample data to publish as an Artifact.                                                                                                                                                                                                                                      |
+| m19-03-chrome-automation        | `lesson/m19-03` | Process-only — driving this repo with Claude in Chrome; both tags point at the m19-01 solution tip.                                                                                                                                                                                                                         |
+
+`BUGS.md`'s B6 and B7 are no longer "reserved" — both are fixed and tagged like B1–B5.
+
+### Modules with no tags: m20-team, m21-scale
+
+Neither module has a single lesson marked `Lab` in `docs/CURRICULUM.md` §2 — every lesson in
+both is about process (settings, budgets, rollout, caching, gateways) or a strategy applied
+to a codebase bigger than this one, not a hands-on change to _this_ repo. Their supporting
+material still lives here, added directly to `main` with no `-start`/`-solution` pair:
+
+- **m20-team:** `.claude/settings.json`'s team allowlist/deny-list, `MARKETPLACE.md`.
+- **m21-scale:** `large/` (30 generated placeholder modules across 5 areas, for
+  large-codebase-navigation and context-engineering practice).
 
 ## Transcripts
 
