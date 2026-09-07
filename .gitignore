@@ -1,0 +1,6 @@
+node_modules/
+.labtrack-data.json
+*.log
+coverage/
+.env
+.env.local
