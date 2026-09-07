@@ -41,13 +41,9 @@ export async function runAdd(args: AddArgs, deps: AddDeps = {}) {
     priority: args.priority !== undefined ? Number(args.priority) : undefined,
     dueDate: args.due,
   });
-  try {
-    await save(listTasks(), dataFile);
-  } catch (err) {
-    throw new Error(`failed to save tasks to ${dataFile}: ${(err as Error).message}`, {
-      cause: err,
-    });
-  }
+  // Fire-and-forget: a rejection here becomes an unhandled promise rejection instead of
+  // reaching the caller.
+  save(listTasks(), dataFile);
   return task;
 }
 
