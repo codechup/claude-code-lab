@@ -2,7 +2,7 @@
 id: P01
 title: CLI usability - help text and --version
 milestone: M1
-status: in_progress
+status: review
 owner: sonnet-p01-2026-09-07
 branch: plan/01-cli-usability
 model_hint: sonnet
@@ -13,7 +13,7 @@ owned_paths:
   - test/cli-usability.test.ts
 shared_paths: []
 estimate: S
-updated_at: 2026-09-07T10:15:00Z
+updated_at: 2026-09-07T10:45:00Z
 ---
 
 ## Goal
@@ -71,4 +71,26 @@ Run for real: `npm test`, `npm run typecheck`, `node src/cli.ts --help`,
 
 ## Handoff notes
 
-- _Filled by the executing session: what changed, decisions, follow-ups, blockers._
+**What shipped.** `src/cli.ts`: every `program.command(...)` got a one-line `.description()`
+plus an `.addHelpText("after", ...)` runnable example; `program.version()` reads the version
+from `package.json` via a new `readVersion()` helper (reads the file directly with
+`node:fs`, not an import assertion — matches this file's existing style). New
+`test/cli-usability.test.ts` (3 tests): `readVersion()` matches `package.json`, every
+subcommand has a non-empty description, and every subcommand's own `--help` shows an
+`Example:` line (captured via `command.configureOutput()` + `outputHelp()` —
+`helpInformation()` alone doesn't include `addHelpText()` content, learned by first writing
+the test against it and watching it fail with the built-in help text only).
+
+**Verified for real:** `npm test` (20/20, up from 17), `npm run typecheck` (clean),
+`node src/cli.ts --version` → `1.0.0`, `node src/cli.ts --help` and
+`node src/cli.ts add --help` (both show the new descriptions/example).
+
+**Decisions.** Used commander's own `.version()` rather than a bespoke `--version` handler —
+it also gives `-V` for free and integrates with `--help`'s option list.
+
+**Follow-ups / open questions.** None blocking. A future plan could add `--json` to `list`/
+`show` for scripting, but that's a new feature, not usability polish — out of this plan's
+scope.
+
+**Status:** moved to `review` — ready for another session to check the two acceptance
+criteria and merge.

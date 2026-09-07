@@ -3,6 +3,7 @@
 // arguments, calls into the store, and prints. Exported *run* functions are what tests call
 // directly, so a test never has to spawn a child process to exercise CLI behaviour.
 import { Command } from "commander";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   addTask,
@@ -19,6 +20,14 @@ import {
 } from "./store.ts";
 
 export const DATA_FILE = resolve(process.cwd(), ".labtrack-data.json");
+
+/** Reads this package's own version out of package.json — the single source of truth for
+ * what `labtrack --version` prints (P01-cli-usability.md). */
+export function readVersion(): string {
+  const pkgPath = resolve(import.meta.dirname, "..", "package.json");
+  const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as { version: string };
+  return pkg.version;
+}
 
 /** Hydrates the in-memory store from DATA_FILE. Call once, before any command runs. */
 export async function loadStateForCli(dataFile: string = DATA_FILE): Promise<void> {
@@ -77,10 +86,15 @@ function printTask(t: { id: string; title: string; done: boolean; priority: numb
 
 export function buildProgram(): Command {
   const program = new Command();
-  program.name("labtrack").description("A tiny task tracker for the Claude Code Academy labs.");
+  program
+    .name("labtrack")
+    .description("A tiny task tracker for the Claude Code Academy labs.")
+    .version(readVersion(), "--version", "print the installed labtrack version");
 
   program
     .command("add <title>")
+    .description("add a new task")
+    .addHelpText("after", '\nExample: labtrack add "buy milk" --priority 1 --due 2026-09-10')
     .option("--priority <n>", "priority, 0 or higher")
     .option("--due <isoDate>", "due date, ISO 8601")
     .action(async (title: string, opts: { priority?: string; due?: string }) => {
@@ -95,6 +109,8 @@ export function buildProgram(): Command {
 
   program
     .command("list")
+    .description("list tasks, paginated")
+    .addHelpText("after", "\nExample: labtrack list --status open --page 1 --page-size 10")
     .option("--status <status>", "all | open | done", "all")
     .option("--page <n>", "1-indexed page number", "1")
     .option("--page-size <n>", "items per page", "20")
@@ -107,32 +123,44 @@ export function buildProgram(): Command {
       for (const t of page) console.log(printTask(t));
     });
 
-  program.command("show <id>").action((id: string) => {
-    const task = runShow(id);
-    if (!task) {
-      console.error(`no such task: ${id}`);
-      process.exitCode = 1;
-      return;
-    }
-    console.log(JSON.stringify(task, null, 2));
-  });
+  program
+    .command("show <id>")
+    .description("show one task, including whether it's overdue")
+    .addHelpText("after", "\nExample: labtrack show 1a2b3c4d")
+    .action((id: string) => {
+      const task = runShow(id);
+      if (!task) {
+        console.error(`no such task: ${id}`);
+        process.exitCode = 1;
+        return;
+      }
+      console.log(JSON.stringify(task, null, 2));
+    });
 
-  program.command("done <id>").action(async (id: string) => {
-    const task = markDone(id);
-    await saveToDisk(listTasks(), DATA_FILE);
-    console.log(`done ${task.id}`);
-  });
+  program
+    .command("done <id>")
+    .description("mark a task done")
+    .addHelpText("after", "\nExample: labtrack done 1a2b3c4d")
+    .action(async (id: string) => {
+      const task = markDone(id);
+      await saveToDisk(listTasks(), DATA_FILE);
+      console.log(`done ${task.id}`);
+    });
 
-  program.command("rm <id>").action(async (id: string) => {
-    const removed = removeTask(id);
-    if (!removed) {
-      console.error(`no such task: ${id}`);
-      process.exitCode = 1;
-      return;
-    }
-    await saveToDisk(listTasks(), DATA_FILE);
-    console.log(`removed ${id}`);
-  });
+  program
+    .command("rm <id>")
+    .description("remove a task")
+    .addHelpText("after", "\nExample: labtrack rm 1a2b3c4d")
+    .action(async (id: string) => {
+      const removed = removeTask(id);
+      if (!removed) {
+        console.error(`no such task: ${id}`);
+        process.exitCode = 1;
+        return;
+      }
+      await saveToDisk(listTasks(), DATA_FILE);
+      console.log(`removed ${id}`);
+    });
 
   return program;
 }

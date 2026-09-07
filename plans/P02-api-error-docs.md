@@ -2,7 +2,7 @@
 id: P02
 title: API docs - pagination and error responses
 milestone: M1
-status: in_progress
+status: review
 owner: opus-p02-2026-09-07
 branch: plan/02-api-error-docs
 model_hint: sonnet
@@ -12,7 +12,7 @@ owned_paths:
   - docs/API.md
 shared_paths: []
 estimate: S
-updated_at: 2026-09-07T10:20:00Z
+updated_at: 2026-09-07T10:50:00Z
 ---
 
 ## Goal
@@ -70,4 +70,24 @@ against `src/api/server.ts` line by line. Paste the diff in this section when th
 
 ## Handoff notes
 
-- _Filled by the executing session: what changed, decisions, follow-ups, blockers._
+**What shipped.** `docs/API.md`: one section per route in `createApp()` (`GET /`,
+`GET /health`, `GET /tasks`, `POST /tasks`, `GET /tasks/:id`, `POST /tasks/:id/done`,
+`POST /tasks/:id/render-note`), each with its success shape and every status code its
+handler's `sendJson`/`throw` calls can produce, plus the shared 404/500 fallbacks.
+
+**A real inconsistency found while writing it, not fixed here (out of `owned_paths`):**
+`GET /tasks/:id` on an unknown id returns **404**, but `POST /tasks/:id/done` on the same
+unknown id returns **400** (`markDone` throws `InvalidTaskError`, which the route's
+`catch` maps to 400, instead of checking existence first the way `GET /tasks/:id` and
+`POST /tasks/:id/render-note` both do). Documented as-is rather than silently normalised —
+fixing it means touching `src/api/server.ts`, which belongs to a different plan.
+
+**Verified for real:** `npm test` (still 20/20 — this plan touches no source file) and a
+manual line-by-line read-through of `docs/API.md` against `src/api/server.ts`.
+
+**Follow-ups / open questions.** The 404-vs-400 inconsistency above is worth its own small
+plan (fix in `src/api/server.ts`, `owned_paths: [src/api/server.ts]` — disjoint from both
+`P01` and this plan).
+
+**Status:** moved to `review` — ready for another session to check the doc against the
+route table and merge.
