@@ -9,14 +9,21 @@ import {
   getTask,
   isOverdue,
   listTasks,
+  loadFromDisk,
   markDone,
   paginate,
   removeTask,
+  replaceAllTasks,
   saveToDisk,
   type StatusFilter,
 } from "./store.ts";
 
 export const DATA_FILE = resolve(process.cwd(), ".labtrack-data.json");
+
+/** Hydrates the in-memory store from DATA_FILE. Call once, before any command runs. */
+export async function loadStateForCli(dataFile: string = DATA_FILE): Promise<void> {
+  replaceAllTasks(await loadFromDisk(dataFile));
+}
 
 export interface AddArgs {
   title: string;
@@ -110,18 +117,20 @@ export function buildProgram(): Command {
     console.log(JSON.stringify(task, null, 2));
   });
 
-  program.command("done <id>").action((id: string) => {
+  program.command("done <id>").action(async (id: string) => {
     const task = markDone(id);
+    await saveToDisk(listTasks(), DATA_FILE);
     console.log(`done ${task.id}`);
   });
 
-  program.command("rm <id>").action((id: string) => {
+  program.command("rm <id>").action(async (id: string) => {
     const removed = removeTask(id);
     if (!removed) {
       console.error(`no such task: ${id}`);
       process.exitCode = 1;
       return;
     }
+    await saveToDisk(listTasks(), DATA_FILE);
     console.log(`removed ${id}`);
   });
 
@@ -131,5 +140,6 @@ export function buildProgram(): Command {
 const isMain =
   process.argv[1] && resolve(process.argv[1]) === resolve(import.meta.dirname, "cli.ts");
 if (isMain) {
+  await loadStateForCli();
   await buildProgram().parseAsync(process.argv);
 }

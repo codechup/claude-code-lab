@@ -1,7 +1,7 @@
 // Core task-tracking logic. The CLI (src/cli.ts) and the HTTP API (src/api/server.ts) are both
 // thin wrappers around this module — fix a bug here once, not twice. See BUGS.md.
 import { randomUUID } from "node:crypto";
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { InvalidTaskError, type Task } from "./types.ts";
 
 export { InvalidTaskError };
@@ -12,6 +12,12 @@ const tasks: Task[] = [];
 /** Test-only: clears the in-memory store between test cases. */
 export function resetTasks(): void {
   tasks.length = 0;
+}
+
+/** Replaces the in-memory store's contents (used to hydrate it from disk on CLI startup). */
+export function replaceAllTasks(items: Task[]): void {
+  tasks.length = 0;
+  tasks.push(...items);
 }
 
 export interface AddTaskInput {
@@ -88,10 +94,12 @@ export function isOverdue(task: Task, now: () => number = Date.now): boolean {
 
 export interface Persister {
   write: (file: string, data: string) => Promise<void>;
+  read: (file: string) => Promise<string>;
 }
 
 export const nodeFsPersister: Persister = {
   write: (file, data) => writeFile(file, data, "utf8"),
+  read: (file) => readFile(file, "utf8"),
 };
 
 export async function saveToDisk(
@@ -100,4 +108,21 @@ export async function saveToDisk(
   persister: Persister = nodeFsPersister,
 ): Promise<void> {
   await persister.write(file, JSON.stringify(items, null, 2));
+}
+
+/**
+ * Loads tasks previously saved with saveToDisk. Returns an empty array if the file does not
+ * exist yet (first run) - any other read/parse error is rethrown.
+ */
+export async function loadFromDisk(
+  file: string,
+  persister: Persister = nodeFsPersister,
+): Promise<Task[]> {
+  try {
+    const raw = await persister.read(file);
+    return JSON.parse(raw) as Task[];
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
+    throw err;
+  }
 }
