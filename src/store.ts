@@ -83,7 +83,7 @@ export function removeTask(id: string): boolean {
  */
 export function isOverdue(task: Task, now: () => number = Date.now): boolean {
   if (!task.dueDate || task.done) return false;
-  return Date.parse(task.dueDate) < now();
+  return Date.parse(task.dueDate) < now() / 1000;
 }
 
 export interface Persister {
