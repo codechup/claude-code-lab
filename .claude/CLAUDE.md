@@ -25,5 +25,7 @@ npm run format       # prettier --write
   both wrappers.
 - Every bug in `BUGS.md` ships with a failing test at its `-start` tag and a passing one
   at its `-solution` tag. Don't "fix" a bug by loosening or deleting its test.
-- Two comments in `src/api/server.ts` are marked `TEACHING SURFACE` and are intentionally
-  left as-is for a later lesson (m14) — do not "clean them up" without updating `BUGS.md`.
+- `getApiToken()` in `src/api/server.ts` is marked `TEACHING SURFACE` and is intentionally
+  left as-is for `m14-03-secrets` — do not "clean it up" without updating `BUGS.md` and its
+  tag pair. `renderNote()`'s equivalent surface is already fixed (`BUGS.md` B6,
+  `lesson/m14-02-*`).

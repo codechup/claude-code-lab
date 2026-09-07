@@ -63,21 +63,29 @@ the test with `vi.useFakeTimers()` / `vi.setSystemTime()` — no real time elaps
 result is deterministic on every run.
 **Used by:** `lesson/m02-04-start`/`-solution` (plan mode: plan the fix before making it).
 
-## B6 — Prompt-injection-shaped surface (reserved, not yet tagged)
+## B6 — Prompt-injection-shaped surface
 
 **Where:** `renderNote()` / `POST /tasks/:id/render-note` in `src/api/server.ts`.
-**What:** splices unsanitised user input directly into a templated string. No LLM is called
-here, but the shape of the mistake — untrusted text trusted as part of an instruction/template
-— is the one the security module (`m14-02-prompt-injection`) will use. Left in place on
-`main` deliberately; do not "fix" it without updating this file and adding that lesson's tags
-(tracked as a follow-up, see the plan's Handoff notes — `m14` is out of this plan's M1 scope).
+**Bug:** splices unsanitised user input directly into a templated string. No LLM is called
+here, but the shape of the mistake — untrusted text trusted as part of an
+instruction/template — is the one the `m14-02-prompt-injection` lesson finds and fixes: a
+role-marker-shaped line in the note (`SYSTEM: ...`) survives as a literal new line in the
+rendered output.
+**Reproduce:** `test/security.test.ts › POST /tasks/:id/render-note — prompt-injection-shaped input (B6)` fails at the `-start` tag.
+**Fix:** `sanitizeNote()` collapses line breaks before the note reaches the template, so
+injected text can never open a new "line" that looks like a fresh instruction/role marker.
+**Used by:** `lesson/m14-02-start`/`-solution`.
 
-## B7 — Secrets-in-logs surface (reserved, not yet tagged)
+## B7 — Secrets-in-logs surface
 
 **Where:** `getApiToken()` in `src/api/server.ts`.
-**What:** logs the API token to stdout on startup. The token is a placeholder value, never a
-real credential, but the anti-pattern is real: this is what `m14-03-secrets` will have a
-reader find and remove. Left in place on `main` deliberately for the same reason as B6.
+**Bug:** logs the API token to stdout on startup. The token is a placeholder value, never a
+real credential, but the anti-pattern is real: this is what `m14-03-secrets` has a reader
+find and remove.
+**Reproduce:** `test/security.test.ts › getApiToken — no secret in logs (B7)` fails at the
+`-start` tag.
+**Fix:** log that a token is configured without printing its value.
+**Used by:** `lesson/m14-03-start`/`-solution`. This lesson also adds `.gitleaks.toml`.
 
 ---
 

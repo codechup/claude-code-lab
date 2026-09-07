@@ -42,14 +42,19 @@ function sendJson(res: ServerResponse, status: number, body: unknown): void {
 }
 
 /**
- * TEACHING SURFACE (m14-02-prompt-injection, a later plan): this handler concatenates
- * unsanitised user input straight into a templated response. Nothing here calls a real LLM, but
- * the *shape* of the mistake is the same one that lets injected text hijack an instruction
- * template — that lesson's exercise is to spot it and add sanitisation/escaping. Left as-is;
- * do not "fix" without updating BUGS.md.
+ * BUGS.md B6 (m14-02-prompt-injection): note is untrusted user input. Nothing here calls a
+ * real LLM, but the *shape* of the original mistake — splicing it straight into a templated
+ * string — is the one that lets injected text hijack an instruction template if this string
+ * were ever fed to one. Treat it as inert data: collapse line breaks (so it can never open a
+ * new "line" that looks like a fresh instruction or role marker) before it goes anywhere near
+ * the template.
  */
+function sanitizeNote(note: string): string {
+  return note.replace(/[\r\n]+/g, " ").trim();
+}
+
 function renderNote(title: string, note: string): string {
-  return `Note for "${title}": ${note}`;
+  return `Note for "${title}": ${sanitizeNote(note)}`;
 }
 
 export function createApp() {
