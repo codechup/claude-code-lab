@@ -1,0 +1,55 @@
+name: Claude PR review
+
+# The m13-02-github-actions-review lab: an automatic PR review with
+# anthropics/claude-code-action@v1 (see its docs/solutions.md § Automatic PR Code Review).
+#
+# This workflow is intentionally harmless when ANTHROPIC_API_KEY isn't set (a public fork's
+# claude-code-lab clone, or this repo before a maintainer adds the secret): the review step
+# is skipped via a job-level env → step `if` guard instead of failing red. A pull_request
+# from a fork never receives secrets on a public repo either way, so the guard also covers
+# that case without extra logic.
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  review:
+    name: claude-review
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code review
+        if: ${{ env.ANTHROPIC_API_KEY != '' }}
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Review this pull request against this repo's own conventions (.claude/CLAUDE.md,
+            BUGS.md): correctness, whether a bug fix kept its test, whether core logic still
+            lives in src/store.ts rather than being duplicated in the CLI/API wrappers, and
+            whether either TEACHING SURFACE comment in src/api/server.ts was touched without
+            a matching BUGS.md update.
+
+            The PR branch is already checked out in the current working directory.
+            Use `gh pr comment` for top-level feedback; only post GitHub comments, don't
+            just print review text.
+          claude_args: |
+            --allowedTools "Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+
+      - name: Skipped (no ANTHROPIC_API_KEY secret)
+        if: ${{ env.ANTHROPIC_API_KEY == '' }}
+        run: echo "ANTHROPIC_API_KEY is not set — skipping the Claude review step."
