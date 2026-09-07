@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import { addTask, isOverdue, resetTasks } from "../src/store.ts";
 
 beforeEach(() => {
@@ -31,20 +31,19 @@ describe("isOverdue", () => {
     expect(isOverdue(task)).toBe(false);
   });
 
-  // This is the fix for the flaky-test bug in BUGS.md ("real-timer-dependent test"): isOverdue
-  // takes an injectable clock, so this test controls time with vitest's fake timers instead of
-  // real sleeps. It is deterministic on every run, on every machine, at any CI load.
-  test("a task becomes overdue exactly when its due date passes (fake clock, deterministic)", () => {
-    vi.useFakeTimers();
-    try {
-      vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
-      const task = addTask({ title: "renew license", dueDate: "2026-01-01T00:00:30.000Z" });
-      expect(isOverdue(task, Date.now)).toBe(false);
+  // Seeded bug B5 (BUGS.md): this test asserts against real wall-clock timing instead of
+  // controlling the clock. It hard-codes elapsed-time assumptions that real setTimeout scheduling
+  // does not guarantee - it fails outright here, and would merely be *intermittent* if the
+  // margins were tuned tighter. Either way, a test must never depend on real time passing.
+  test("a task becomes overdue exactly when its due date passes", async () => {
+    const task = addTask({
+      title: "renew license",
+      dueDate: new Date(Date.now() + 200).toISOString(),
+    });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(isOverdue(task)).toBe(false);
 
-      vi.setSystemTime(new Date("2026-01-01T00:00:31.000Z"));
-      expect(isOverdue(task, Date.now)).toBe(true);
-    } finally {
-      vi.useRealTimers();
-    }
+    await new Promise((r) => setTimeout(r, 20)); // ~40ms elapsed - due date is still ~160ms away
+    expect(isOverdue(task)).toBe(true);
   });
 });
