@@ -1,0 +1,8 @@
+{
+  "name": "labtrack-tools",
+  "description": "The m06/m07 example skill and hook (commit-msg, format-on-save), packaged as an installable plugin for the m12-03-build-a-plugin lab.",
+  "version": "1.0.0",
+  "author": {
+    "name": "CodeChup Claude Code Academy"
+  }
+}
