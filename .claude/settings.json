@@ -41,6 +41,20 @@
           {
             "type": "command",
             "command": "node .claude/hooks/notify-done.mjs"
+          },
+          {
+            "type": "command",
+            "command": "node .claude/hooks/session-context.mjs"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/session-context.mjs"
           }
         ]
       }
