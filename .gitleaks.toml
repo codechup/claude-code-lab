@@ -1,0 +1,17 @@
+title = "claude-code-lab gitleaks config"
+
+# The m14-03-secrets lab: run `gitleaks detect --config .gitleaks.toml` (or
+# `gitleaks protect --staged --config .gitleaks.toml` as a pre-commit check) against this
+# repo. Extends gitleaks' own default rule set instead of replacing it.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "This repo's own documented placeholders — never real credentials"
+regexes = [
+  # BUGS.md B7 / src/api/server.ts: the fallback dev token, always a placeholder.
+  '''dev-placeholder-token''',
+  # .mcp.json / mcp/README.md: env-var references, never a literal secret value.
+  '''\$\{GITHUB_TOKEN\}''',
+  '''\$\{LABTRACK_DATA_FILE(:-[^}]*)?\}''',
+]

@@ -25,7 +25,7 @@ npm run format       # prettier --write
   both wrappers.
 - Every bug in `BUGS.md` ships with a failing test at its `-start` tag and a passing one
   at its `-solution` tag. Don't "fix" a bug by loosening or deleting its test.
-- `getApiToken()` in `src/api/server.ts` is marked `TEACHING SURFACE` and is intentionally
-  left as-is for `m14-03-secrets` — do not "clean it up" without updating `BUGS.md` and its
-  tag pair. `renderNote()`'s equivalent surface is already fixed (`BUGS.md` B6,
-  `lesson/m14-02-*`).
+- Never log a secret's value, even a placeholder one (`BUGS.md` B7) — log that it's
+  configured, and where it came from, not what it is. `.gitleaks.toml` documents this
+  repo's secret-scanning baseline (`gitleaks detect --config .gitleaks.toml`) — a scanner is
+  a backstop for that habit, not a substitute for it.

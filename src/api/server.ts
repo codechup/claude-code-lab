@@ -15,14 +15,15 @@ import {
 import { InvalidTaskError } from "../types.ts";
 
 /**
- * TEACHING SURFACE (m14-03-secrets, a later plan): reading a token from the environment is fine;
- * logging it on startup is the anti-pattern that lesson's exercise finds and removes. Left as-is
- * here — a placeholder value only, never a real credential — so a future lesson has something
- * genuine to fix. Do not "clean this up" without updating BUGS.md.
+ * BUGS.md B7 (m14-03-secrets): reading a token from the environment is fine; logging its
+ * value on startup is not — even a placeholder value trains the habit of putting secrets in
+ * logs, where they end up in log aggregators, CI output and crash reports far more widely
+ * read than the process that printed them. Log that a token is configured, never the value.
  */
 export function getApiToken(): string {
   const token = process.env.LABTRACK_API_TOKEN ?? "dev-placeholder-token";
-  console.log(`[config] using token: ${token}`);
+  const source = process.env.LABTRACK_API_TOKEN ? "environment" : "default";
+  console.log(`[config] API token configured (source: ${source})`);
   return token;
 }
 
