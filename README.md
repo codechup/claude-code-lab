@@ -19,6 +19,9 @@ npm ci
 npm test          # vitest — all green on main
 npm run typecheck # tsc --noEmit
 npm run lint      # eslint + prettier --check
+npm run hygiene   # public-repo hygiene scan (this repo is public)
+
+sh scripts/install-hooks.sh   # once per clone: pre-commit/pre-push guards (see "Tag contract")
 
 npm start -- add "buy milk" --priority 1     # try the CLI
 npm run api                                   # try the HTTP API on :3000
@@ -34,7 +37,7 @@ src/
   api/server.ts   tiny HTTP API: GET/POST /tasks, GET /health, ... (docs: docs/API.md)
 test/             vitest — one file per area (store, overdue, persist, api, security,
                   cli-usability)
-.claude/          this repo's own minimal Claude Code setup: CLAUDE.md, one rule, 4 hooks,
+.claude/          this repo's own minimal Claude Code setup: CLAUDE.md, 2 rules, 4 hooks,
                   3 skills, 4 agents (code-reviewer, test-writer, docs-writer, researcher),
                   settings.json (a small team allowlist + deny list) — teaching material,
                   not a full dogfooding setup
@@ -46,7 +49,9 @@ mcp/              a minimal stdio MCP server (@modelcontextprotocol/sdk), one to
 plugins/          labtrack-tools: the commit-msg skill + format-on-save hook, packaged
                   as an installable plugin
 scripts/          headless-example.sh (claude -p), loop-check.sh (a /loop target),
-                  plan.mjs (lists claimable plans/*.md)
+                  plan.mjs (lists claimable plans/*.md),
+                  check-public-hygiene.mjs (public-repo scan), install-hooks.sh,
+                  git-hooks/ (pre-commit hygiene, pre-push hygiene + lesson-tag guard)
 routines/         an example routine description (cron-triggered, repo-side brief)
 plans/, STATE.md  two example plans with the training repo's own frontmatter convention,
                   and a generated-looking STATE.md
@@ -57,8 +62,10 @@ large/            30 generated placeholder modules for the large-codebase-naviga
 MARKETPLACE.md    what this repo has to share as a team plugin marketplace
 .gitleaks.toml    this repo's secret-scanning baseline
 .github/workflows/
-  ci.yml            typecheck + lint + test on every push/PR
-  claude-review.yml anthropics/claude-code-action@v1 PR review (no-op without the secret)
+  ci.yml            typecheck + lint + test, public-repo hygiene, and the lesson-tag
+                    contract check, on every push/PR
+  claude-review.yml anthropics/claude-code-action@v1 PR review (no-op without the secret;
+                    `pull_request` only — never `pull_request_target`, see the file)
 ```
 
 ## How a lesson uses a tag
@@ -174,6 +181,69 @@ material still lives here, added directly to `main` with no `-start`/`-solution`
 - **m20-team:** `.claude/settings.json`'s team allowlist/deny-list, `MARKETPLACE.md`.
 - **m21-scale:** `large/` (30 generated placeholder modules across 5 areas, for
   large-codebase-navigation and context-engineering practice).
+
+## Tag contract
+
+**The 98 `lesson/mNN-KK-start` / `lesson/mNN-KK-solution` tags are content, not history.** Each is
+cited _by name_ from a lesson's frontmatter (`lab.repo_tag`) in `codechup/claude-code-training`,
+rendered into the page a reader copies, and quoted in that lesson's captured transcript. 49 pairs,
+one per `Lab`-tagged lesson.
+
+Therefore:
+
+- **A lesson tag is never deleted, never renamed, and never moved to a different commit.** Moving
+  one silently changes what a reader gets from a `git checkout` that a published lesson told them
+  to run — the lesson still "works", it just no longer matches. That is worse than a broken link.
+- **Never force-push or rewrite the history a tag points into**, and never rewrite author identity
+  across the repo: both detach or move every tag downstream of the rewrite.
+- New lessons **add** pairs; they never repurpose an existing prefix.
+
+Enforced by the `pre-push` hook (`sh scripts/install-hooks.sh`), which refuses a push that deletes
+or moves a `refs/tags/lesson/*` ref, and by the `tags` job in `.github/workflows/ci.yml`, which
+fails if the count drops below 49 pairs or a `-start` loses its `-solution`.
+
+### If a tag genuinely must change
+
+Only when the tagged state is _wrong_ — it does not build, or it teaches something now false.
+
+1. Open an issue/PR in `claude-code-training` first, naming every lesson whose `lab.repo_tag`
+   points at the pair (`git grep -n "lesson/m07-03" content/`). The lesson change and the tag
+   change ship together, or readers see a mismatch in between.
+2. Prefer **adding a new pair** (`lesson/m07-03b-start` / `-solution`) and repointing the lesson
+   over moving the old one. The old tag stays valid for anyone mid-lesson or reading a cached page.
+3. If the pair really must move, do it as one deliberate, announced operation:
+   `LAB_ALLOW_TAG_REWRITE=1 git push --force origin lesson/m07-03-start` — then update this
+   README's tag map row, and re-run the lesson's lab and re-capture its transcript. A transcript
+   that no longer matches its tag is a fabricated transcript.
+4. Record what moved and why in the PR description. `git tag -l 'lesson/*' | wc -l` must still
+   print `98` afterwards.
+
+## Public-repository hygiene
+
+This repo is public and permanent. Before you push:
+
+```bash
+sh scripts/install-hooks.sh                                  # once per clone: pre-commit + pre-push
+                                                            # guards, and a commit-identity check
+npm run hygiene                                             # scan tracked files
+node scripts/check-public-hygiene.mjs --commits origin/main..HEAD   # the commits you would publish
+node scripts/check-public-hygiene.mjs --identity            # this clone's git identity
+gitleaks detect --config .gitleaks.toml                     # the m14-03 lab's scanner
+```
+
+No hosting IPs or hostnames, no absolute host paths, no local user-profile paths, no personal
+email address as a commit author, no `Claude-Session:` trailer, no secret values — see
+`.claude/rules/public-hygiene.md` for the full rule and for `HYGIENE_EXTRA_PATTERNS` /
+`.hygiene.local.json`, the out-of-band way to add private match patterns without spelling them out
+in this repo. `--commits` takes an explicit range and checks author, committer and trailer
+identities against a positive allowlist, masking anything it rejects. The `hygiene` job in
+`.github/workflows/ci.yml` runs the same checks on every push and pull request.
+
+`scripts/check-public-hygiene.mjs` is the sibling of the same file in
+`codechup/claude-code-training` and carries the same rule set, CLI contract and commit-metadata
+policy; the two lab-only differences are marked `LAB-ONLY` in the source. Note the known gap the
+rule file records: commits made before the check existed do not pass it, and the guards therefore
+scan only what a push adds.
 
 ## Transcripts
 

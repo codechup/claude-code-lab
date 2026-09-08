@@ -25,6 +25,12 @@ npm run format       # prettier --write
   both wrappers.
 - Every bug in `BUGS.md` ships with a failing test at its `-start` tag and a passing one
   at its `-solution` tag. Don't "fix" a bug by loosening or deleting its test.
+- This repo is **public** and its 98 `lesson/*` tags are cited by name from published lessons:
+  never delete or move a lesson tag, and never commit a private hostname, path, or a personal
+  email as the commit author, and never a `Claude-Session:` trailer in a commit message. See
+  `.claude/rules/public-hygiene.md` and README.md "Tag contract"; `npm run hygiene`,
+  `node scripts/check-public-hygiene.mjs --commits origin/main..HEAD` and `--identity` are the
+  checks.
 - Never log a secret's value, even a placeholder one (`BUGS.md` B7) — log that it's
   configured, and where it came from, not what it is. `.gitleaks.toml` documents this
   repo's secret-scanning baseline (`gitleaks detect --config .gitleaks.toml`) — a scanner is

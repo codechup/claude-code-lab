@@ -1,0 +1,25 @@
+# Mirrors the training repo's configuration. Kept deliberately small: this repo
+# is a teaching sandbox, and a flood of update PRs would bury the `lesson/**`
+# tags and the BUGS.md exercises that the lessons actually point at.
+#
+# Grouped so one PR carries the whole ecosystem's bumps — a lesson that cites a
+# tag is unaffected by a dependency bump on `main`, but reviewing seven PRs to
+# find that out is not free.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly, day: monday }
+    groups:
+      npm-deps: { patterns: ["*"] }
+    open-pull-requests-limit: 3
+
+  # The workflows here pin actions by commit SHA. Dependabot is what keeps the
+  # pinned SHAs current; without it, pinning quietly becomes "frozen on an old,
+  # possibly vulnerable release".
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly, day: monday }
+    groups:
+      actions: { patterns: ["*"] }
+    open-pull-requests-limit: 2

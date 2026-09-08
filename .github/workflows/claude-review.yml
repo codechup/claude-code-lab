@@ -9,6 +9,18 @@ name: Claude PR review
 # from a fork never receives secrets on a public repo either way, so the guard also covers
 # that case without extra logic.
 
+# SECURITY INVARIANT — DO NOT CHANGE THIS TRIGGER.
+# This workflow triggers on `pull_request`, never on `pull_request_target`.
+#   - `pull_request` from a fork runs with NO access to repository secrets and a read-only
+#     GITHUB_TOKEN, so a fork PR can never obtain ANTHROPIC_API_KEY, even though this
+#     workflow checks out the PR's head commit (i.e. untrusted code).
+#   - `pull_request_target` would run in the BASE repo's context with full secret access while
+#     still checking out attacker-controlled code — that combination leaks the API key to
+#     anyone who can open a PR. If a future change needs write access from a fork PR, use a
+#     separate, secret-free workflow plus `workflow_run`; do not switch this trigger.
+# The `if: env.ANTHROPIC_API_KEY != ''` guard below is the second half of the same invariant:
+# with no secret the review step is skipped, so a fork PR (and this repo before a maintainer
+# adds the secret) goes green instead of failing red. Keep both halves.
 on:
   pull_request:
     types: [opened, synchronize]
@@ -29,6 +41,16 @@ jobs:
         with:
           fetch-depth: 1
 
+      # PINNING, DELIBERATELY ASYMMETRIC. Third-party actions in this repo are SHA-pinned
+      # (see actions/checkout above): a mutable tag on someone else's action is a supply-chain
+      # risk. `anthropics/claude-code-action` is referenced by its major tag `@v1` on purpose:
+      # this workflow is the worked example for the m13-02 lab and for
+      # `l3-advanced/m13-headless-ci/02-github-actions-review`, which teach `@v1` as the current
+      # reference (and teach migrating off `@beta`); a SHA here would teach a version that rots
+      # and would contradict the lesson a reader is following. The action is first-party to the
+      # tool this course is about, and it carries no repository secret on a fork PR (see the
+      # SECURITY INVARIANT above). A production repo that is not a teaching artifact should
+      # SHA-pin this line too.
       - name: Run Claude Code review
         if: ${{ env.ANTHROPIC_API_KEY != '' }}
         uses: anthropics/claude-code-action@v1
