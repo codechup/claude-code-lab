@@ -31,3 +31,94 @@ jobs:
 
       - name: Test
         run: npm test
+
+  hygiene:
+    name: hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Full history + tags: the --commits scan needs the PR base branch to diff against.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: ".nvmrc"
+
+      # This repository is PUBLIC. Fails the build if a tracked file, or any commit added by
+      # this PR, carries private infrastructure details or credential material.
+      # HYGIENE_EXTRA_PATTERNS is an optional repo secret holding "|||"-separated regexes for
+      # private names that must never be spelled out in this repo — the check works without it.
+      - name: Public-repo hygiene (tracked files)
+        env:
+          HYGIENE_EXTRA_PATTERNS: ${{ secrets.HYGIENE_EXTRA_PATTERNS }}
+        run: node scripts/check-public-hygiene.mjs
+
+      # Only on a pull request, and only over the commits the PR adds: an author email, once
+      # pushed, is public on every commit page forever, and a Claude-Session trailer is a private
+      # URL into the owner's account. base.sha..head.sha is the same range shape the sibling repo
+      # codechup/claude-code-training uses. (Not run on push-to-main: the history predates the
+      # check and does not pass it — see .claude/rules/public-hygiene.md, 'Known gap'.)
+      - name: Public-repo hygiene (commit metadata)
+        if: github.event_name == 'pull_request'
+        env:
+          HYGIENE_EXTRA_PATTERNS: ${{ secrets.HYGIENE_EXTRA_PATTERNS }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/check-public-hygiene.mjs --commits "$BASE_SHA..$HEAD_SHA"
+
+      # The squash-merge commit on `main` is NOT a copy of anything the PR run blessed: GitHub
+      # composes its message from the branch, the merger can edit it in the merge dialog, and
+      # GitHub appends Co-authored-by trailers. Scanning only `before..sha` keeps the documented
+      # 'Known gap' intact — this looks at the commits the push ADDS, never at the old history.
+      - name: Public-repo hygiene (pushed commits)
+        if: github.event_name != 'pull_request'
+        env:
+          HYGIENE_EXTRA_PATTERNS: ${{ secrets.HYGIENE_EXTRA_PATTERNS }}
+        run: |
+          set -euo pipefail
+          before='${{ github.event.before }}'
+          if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]              || ! git cat-file -e "$before^{commit}" 2>/dev/null; then
+            range="-1 ${{ github.sha }}"   # new branch / force push / unknown base: scan the tip
+          else
+            range="$before..${{ github.sha }}"
+          fi
+          echo "scanning $range"
+          node scripts/check-public-hygiene.mjs --commits $range
+
+      # NOTE (owner action): .gitleaks.toml is the m14-03 lab's config and is currently only run
+      # by hand (`gitleaks detect --config .gitleaks.toml`). To also run it here, add a step using
+      # gitleaks/gitleaks-action pinned to a SHA you verified yourself — this file pins every
+      # action by SHA and no unverified digest is written into it.
+
+  # The 98 lesson/mNN-KK-start|-solution tags are cited BY NAME from lesson frontmatter on
+  # cc.codechup.com. This job fails if a tag ever goes missing or loses its pair, so a
+  # deleted or renamed tag is caught here rather than by a reader hitting a dead checkout.
+  # See README.md "Tag contract".
+  tags:
+    name: lesson-tag contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Every lesson tag is paired and none has gone missing
+        run: |
+          starts=$(git tag -l 'lesson/*-start' | wc -l)
+          solutions=$(git tag -l 'lesson/*-solution' | wc -l)
+          echo "start tags: $starts, solution tags: $solutions"
+          fail=0
+          for t in $(git tag -l 'lesson/*-start'); do
+            pair="${t%-start}-solution"
+            git rev-parse -q --verify "refs/tags/$pair" >/dev/null || { echo "::error::$t has no $pair"; fail=1; }
+          done
+          for t in $(git tag -l 'lesson/*-solution'); do
+            pair="${t%-solution}-start"
+            git rev-parse -q --verify "refs/tags/$pair" >/dev/null || { echo "::error::$t has no $pair"; fail=1; }
+          done
+          if [ "$starts" -lt 49 ] || [ "$solutions" -lt 49 ]; then
+            echo "::error::expected at least 49 -start and 49 -solution tags (98 total); tags must never be deleted"
+            fail=1
+          fi
+          exit $fail

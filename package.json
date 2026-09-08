@@ -18,6 +18,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . && prettier --check .",
+    "hygiene": "node scripts/check-public-hygiene.mjs",
     "format": "prettier --write ."
   },
   "dependencies": {

@@ -1,0 +1,76 @@
+#!/usr/bin/env sh
+# pre-push — two guards for a PUBLIC repo whose tags are course content.
+# Install once per clone:  sh scripts/install-hooks.sh   (or: git config core.hooksPath scripts/git-hooks)
+#
+# 1. Hygiene: the commit messages and authorship about to become public are scanned. Commit
+#    with the publishing account's noreply address, never a personal one — once pushed, an
+#    author email is visible on every commit page forever.
+# 2. Tag contract: the 98 `lesson/mNN-KK-start` / `-solution` tags are cited BY NAME from lesson
+#    frontmatter on cc.codechup.com (`lab.repo_tag`). Deleting one, or moving one to a different
+#    commit, silently breaks every lesson that names it. This hook refuses both; see the
+#    "Tag contract" section of README.md for the procedure when a tag genuinely must change.
+#    Override for a deliberate, documented retag:  LAB_ALLOW_TAG_REWRITE=1 git push ...
+#
+# BOTH guards are driven by the refs on STDIN, one range per pushed ref — NOT by HEAD. Scanning
+# `@{u}..HEAD` meant that pushing a branch that is not checked out, or `git push --all`, or
+# `git push <sha>:refs/heads/x`, moved commits to the public remote unscanned.
+# NOTE: this repo's history predates the check and does not pass it; the range is deliberately
+# what a push ADDS, never the whole of main.
+
+status=0
+checked=0
+zero='0000000000000000000000000000000000000000'
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$remote_ref" in
+    refs/tags/lesson/*)
+      if [ "${LAB_ALLOW_TAG_REWRITE:-}" != "1" ]; then
+        if [ "$local_sha" = "$zero" ]; then
+          echo "pre-push: refusing to DELETE $remote_ref — lesson tags are cited by name from lesson frontmatter." >&2
+          echo "          See README.md 'Tag contract'. Deliberate retag: LAB_ALLOW_TAG_REWRITE=1 git push ..." >&2
+          status=1
+        elif [ -n "$remote_sha" ] && [ "$remote_sha" != "$zero" ] && [ "$remote_sha" != "$local_sha" ]; then
+          echo "pre-push: refusing to MOVE $remote_ref ($remote_sha -> $local_sha) — lesson tags are immutable." >&2
+          echo "          See README.md 'Tag contract'. Deliberate retag: LAB_ALLOW_TAG_REWRITE=1 git push ..." >&2
+          status=1
+        fi
+      fi
+      # A tag points at a commit that some branch push already carried; nothing extra to scan.
+      continue
+      ;;
+  esac
+
+  # A ref deletion pushes nothing; there is no commit to scan.
+  case "$local_sha" in "$zero"|"") continue;; esac
+
+  if [ "$remote_sha" = "$zero" ] || [ -z "$remote_sha" ]; then
+    # New ref on the remote: everything reachable from it that no origin ref already has.
+    set -- "$local_sha" --not --remotes=origin
+  else
+    set -- "$remote_sha..$local_sha"
+  fi
+  checked=1
+  node scripts/check-public-hygiene.mjs --commits "$@" || status=1
+done
+
+# Fallback: git supplied no refs on stdin. Scan the current branch rather than skipping.
+if [ "$checked" -eq 0 ] && [ "$status" -eq 0 ]; then
+  if range=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null) && [ -n "$range" ]; then
+    range="$range..HEAD"
+  elif git rev-parse --verify --quiet origin/main >/dev/null; then
+    range="origin/main..HEAD"
+  else
+    range="HEAD"
+  fi
+  node scripts/check-public-hygiene.mjs --commits "$range" || status=1
+fi
+
+if [ "$status" -ne 0 ]; then
+  echo "" >&2
+  echo "pre-push: blocked (see .claude/rules/public-hygiene.md, 'Commit identity', and README.md 'Tag contract')." >&2
+  echo "If it is the identity, fix it and rewrite the offending commits:" >&2
+  echo "  git config user.name codechup && git config user.email <id>+codechup@users.noreply.github.com" >&2
+  echo "  git rebase --exec 'git commit --amend --no-edit --reset-author' <base>" >&2
+fi
+
+exit $status
