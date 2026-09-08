@@ -22,13 +22,13 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "commander": "^12.1.0"
+    "commander": "^15.0.0"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
-    "eslint": "^9.15.0",
+    "@types/node": "^26.4.1",
+    "eslint": "^10.10.0",
     "prettier": "^3.3.3",
-    "typescript": "^5.7.2",
+    "typescript": "^7.0.2",
     "typescript-eslint": "^8.15.0",
     "vitest": "^5.0.0"
   }
